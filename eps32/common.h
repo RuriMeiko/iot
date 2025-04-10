@@ -1,12 +1,12 @@
 /*
  * File: common.h
- * Mô tả: Khai báo các thư viện và biến toàn cục dùng chung cho toàn bộ hệ thống
+ * Description: Declaration of libraries and global variables used throughout the system
  */
 
 #ifndef COMMON_H
 #define COMMON_H
 
-// Các thư viện Arduino cơ bản
+// Basic Arduino libraries
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
@@ -15,7 +15,7 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-// Khai báo extern các biến toàn cục sẽ được định nghĩa trong các file .cpp
+// Declare extern global variables that will be defined in .cpp files
 extern LiquidCrystal_I2C lcd;
 
 #endif // COMMON_H
