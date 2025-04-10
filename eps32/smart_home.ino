@@ -2,10 +2,10 @@
  * File: smart_home.ino
  * Mu00f4 tu1ea3: File chu00ednh cu1ee7a du1ef1 u00e1n quu1ea3n lu00fd nhu00e0 thu00f4ng minh
  * Tu00e1c giu1ea3: AI Assistant
- * Ngu00e0y: 2023
  */
 
-// Include cu00e1c thu01b0 viu1ec7n cu1ea7n thiu1ebft
+// Include cu00e1c thu01b0 viu1ec7n vu00e0 module
+#include "common.h"
 #include "sensors.h"
 #include "wifi_manager.h"
 #include "lcd_display.h"

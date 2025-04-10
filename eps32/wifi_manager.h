@@ -6,9 +6,12 @@
 #ifndef WIFI_MANAGER_H
 #define WIFI_MANAGER_H
 
-#include <Arduino.h>
-#include <WiFi.h>
-#include <WebServer.h>
+#include "common.h"
+
+// Khai bu00e1o prototype cu1ee7a cu00e1c hu00e0m xu1eed lu00fd Web Server
+void handleRoot();
+void handleScan();
+void handleConnect();
 
 // ======= KHAI Bu00c1O Cu00c1C Hu00c0M =======
 

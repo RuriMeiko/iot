@@ -107,7 +107,3 @@ void displayError(const String& error) {
     lcd.print(error);
   }
 }
-
-LiquidCrystal_I2C& getLCD() {
-  return lcd;
-}

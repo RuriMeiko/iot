@@ -68,7 +68,7 @@ void handleSensors() {
       
       Serial.print("Nhiu1ec7t u0111u1ed9: ");
       Serial.print(currentTemperature);
-      Serial.print("°C, u0110u1ed9 u1ea9m: ");
+      Serial.print("u00b0C, u0110u1ed9 u1ea9m: ");
       Serial.print(currentHumidity);
       Serial.println("%");
     } else {
