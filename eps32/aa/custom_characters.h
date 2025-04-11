@@ -5,51 +5,29 @@
 
 // ========== CUSTOM CHARACTERS ==========
 // WiFi connected icon
-byte wifiIcon[8] = {
-    0b00000, 0b00000, 0b00100, 0b01110, 0b10101, 0b00100, 0b00000, 0b00000
-};
+extern byte wifiIcon[8];
 
 // AP mode icon
-byte apIcon[8] = {
-    0b00000, 0b01110, 0b10001, 0b10101, 0b10001, 0b01110, 0b00000, 0b00000
-};
+extern byte apIcon[8];
 
 // Temperature icon
-byte tempIcon[8] = {
-    0b00100, 0b01010, 0b01010, 0b01010, 0b01110, 0b11111, 0b11111, 0b01110
-};
+extern byte tempIcon[8];
 
 // Humidity icon
-byte humidityIcon[8] = {
-    0b00100, 0b00100, 0b01010, 0b01010, 0b10001, 0b10001, 0b10001, 0b01110
-};
+extern byte humidityIcon[8];
 
 // Motion icon
-byte motionIcon[8] = {
-    0b00000, 0b00100, 0b01110, 0b11111, 0b00100, 0b00100, 0b00000, 0b00000
-};
+extern byte motionIcon[8];
 
 // Loading animation frames (3 frames)
-byte loadingIcon1[8] = {
-    0b00000, 0b00000, 0b00000, 0b11100, 0b11100, 0b00000, 0b00000, 0b00000
-};
-
-byte loadingIcon2[8] = {
-    0b00000, 0b00000, 0b00000, 0b00111, 0b00111, 0b00000, 0b00000, 0b00000
-};
-
-byte loadingIcon3[8] = {
-    0b00000, 0b00000, 0b11100, 0b00000, 0b00000, 0b00111, 0b00000, 0b00000
-};
+extern byte loadingIcon1[8];
+extern byte loadingIcon2[8];
+extern byte loadingIcon3[8];
 
 // Fan icon
-byte fanIcon[8] = {
-    0b00000, 0b01110, 0b01010, 0b11111, 0b10101, 0b00100, 0b01110, 0b00000
-};
+extern byte fanIcon[8];
 
 // Light icon
-byte lightIcon[8] = {
-    0b00000, 0b00000, 0b01110, 0b10001, 0b10001, 0b01110, 0b01110, 0b00000
-};
+extern byte lightIcon[8];
 
 #endif // CUSTOM_CHARACTERS_H

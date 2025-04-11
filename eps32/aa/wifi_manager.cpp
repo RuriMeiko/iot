@@ -100,8 +100,8 @@ bool tryConnectWifi(String ssid, String password) {
 
         delay(2000);  // Display IP for 2 seconds
 
-        // Initialize WebSocket connection
-        setupWebSocket();
+        // WebSocket connection removed as it's currently disabled
+        // setupWebSocket();
 
         updateLCD();
         return true;

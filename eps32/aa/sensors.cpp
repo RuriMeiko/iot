@@ -34,6 +34,8 @@ void checkMotion() {
             updateLCD();
         }
 
+        // WebSocket notifications disabled
+        /*
         // Send motion event immediately through WebSocket if connected
         if (isWsConnected) {
             JsonDocument doc;
@@ -44,6 +46,7 @@ void checkMotion() {
             serializeJson(doc, jsonPayload);
             webSocket.sendTXT(jsonPayload);
         }
+        */
     }
 
     // Turn off LED after timeout
@@ -56,6 +59,8 @@ void checkMotion() {
             updateLCD();
         }
 
+        // WebSocket notifications disabled
+        /*
         // Send motion stopped event through WebSocket if connected
         if (isWsConnected) {
             JsonDocument doc;
@@ -66,5 +71,6 @@ void checkMotion() {
             serializeJson(doc, jsonPayload);
             webSocket.sendTXT(jsonPayload);
         }
+        */
     }
 }

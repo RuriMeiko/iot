@@ -53,8 +53,8 @@ void loop() {
     // Handle DNS server for Captive Portal
     dnsServer.processNextRequest();
 
-    // Handle WebSocket if connected
-    if (isWiFiConnected) {
+    // Handle WebSocket if connected and if we want to use WebSocket
+    if (isWiFiConnected && false) { // Set to true if you want to enable WebSocket
         webSocket.loop();
 
         // Send ping to keep connection alive
@@ -89,14 +89,14 @@ void loop() {
         lastAnimationUpdate = millis();
     }
 
-    // Send data to server
-    if (isWiFiConnected && isWsConnected && millis() - lastDataSend >= DATA_SEND_INTERVAL) {
+    // Send data to server - disabled as WebSocket is disabled
+    if (isWiFiConnected && isWsConnected && false && millis() - lastDataSend >= DATA_SEND_INTERVAL) {
         sendDataToServer();
         lastDataSend = millis();
     }
 
-    // Update device status
-    if (isWiFiConnected && isWsConnected && millis() - lastDeviceUpdate >= DEVICE_UPDATE_INTERVAL) {
+    // Update device status - disabled as WebSocket is disabled
+    if (isWiFiConnected && isWsConnected && false && millis() - lastDeviceUpdate >= DEVICE_UPDATE_INTERVAL) {
         updateDeviceStatus();
         lastDeviceUpdate = millis();
     }

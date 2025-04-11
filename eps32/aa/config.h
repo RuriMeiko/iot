@@ -16,11 +16,11 @@
 #define LIGHT2_PIN 27   // Light 2 control (digital output)
 
 // ========== CONFIGURATION ==========
-const char* apSSID = "Smart Environment";
-const char* apPassword = "12345678";
-const char* WS_SERVER = "abc.xyz";  // WebSocket server address
-const int WS_PORT = 80;             // WebSocket server port
-const char* WS_URL = "/ws";         // WebSocket endpoint
+extern const char* apSSID;
+extern const char* apPassword;
+extern const char* WS_SERVER;
+extern const int WS_PORT;
+extern const char* WS_URL;
 
 // ========== GLOBAL VARIABLES ==========
 extern bool isWiFiConnected;
