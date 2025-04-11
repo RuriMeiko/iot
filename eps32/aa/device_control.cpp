@@ -16,7 +16,7 @@ void setupDeviceControl() {
 
 void handleDeviceControl(const JsonDocument& doc) {
     // Parse fan control commands
-    if (doc["device_control"].containsKey("fan")) {
+    if (doc["device_control"]["fan"].is<int>()) {
         int speed = doc["device_control"]["fan"];
         // Ensure speed is within valid range (0-255)
         if (speed >= 0 && speed <= 255) {
@@ -27,7 +27,7 @@ void handleDeviceControl(const JsonDocument& doc) {
     }
 
     // Parse light 1 control commands
-    if (doc["device_control"].containsKey("light1")) {
+    if (doc["device_control"]["light1"].is<bool>()) {
         bool state = doc["device_control"]["light1"];
         light1Status = state;
         digitalWrite(LIGHT1_PIN, light1Status ? HIGH : LOW);
@@ -35,7 +35,7 @@ void handleDeviceControl(const JsonDocument& doc) {
     }
 
     // Parse light 2 control commands
-    if (doc["device_control"].containsKey("light2")) {
+    if (doc["device_control"]["light2"].is<bool>()) {
         bool state = doc["device_control"]["light2"];
         light2Status = state;
         digitalWrite(LIGHT2_PIN, light2Status ? HIGH : LOW);

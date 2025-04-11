@@ -18,6 +18,9 @@
 #include "device_control.h"
 #include "html_content.h"
 
+// Define DHT global object that will be used across files
+DHT dht(DHTPIN, DHTTYPE);
+
 void setup() {
     Serial.begin(115200);
     Serial.println("\nSmart Environment Hub - Starting up...");

@@ -5,7 +5,8 @@
 #include <WiFi.h>
 #include <ArduinoJson.h>
 
-DHT dht(DHTPIN, DHTTYPE);
+// Define DHT variable as extern since it's defined in aa.ino
+extern DHT dht;
 
 void setupSensors() {
     dht.begin();
@@ -35,7 +36,7 @@ void checkMotion() {
 
         // Send motion event immediately through WebSocket if connected
         if (isWsConnected) {
-            StaticJsonDocument<128> doc;
+            JsonDocument doc;
             doc["event"] = "motion_detected";
             doc["device_id"] = WiFi.macAddress();
 
@@ -57,7 +58,7 @@ void checkMotion() {
 
         // Send motion stopped event through WebSocket if connected
         if (isWsConnected) {
-            StaticJsonDocument<128> doc;
+            JsonDocument doc;
             doc["event"] = "motion_stopped";
             doc["device_id"] = WiFi.macAddress();
 

@@ -4,8 +4,11 @@
 #include "device_control.h"
 #include <WiFi.h>
 #include <ArduinoJson.h>
+#include <DHT.h>
 
 WebSocketsClient webSocket;
+
+// Forward declaration
 extern DHT dht;
 
 void setupWebSocket() {
@@ -38,20 +41,20 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
             sendDataToServer();
             break;
 
-        case WStype_TEXT:
+        case WStype_TEXT: {
             Serial.printf("WebSocket message received: %s\n", payload);
 
             // Process received message
-            StaticJsonDocument<512> responseDoc;
+            JsonDocument responseDoc;
             DeserializationError error = deserializeJson(responseDoc, (char*)payload);
 
             if (!error) {
                 // Check for device control commands
-                if (responseDoc.containsKey("device_control")) {
+                if (responseDoc["device_control"].is<JsonObject>()) {
                     handleDeviceControl(responseDoc);
                 }
                 // Check for WiFi update commands
-                else if (responseDoc.containsKey("new_wifi")) {
+                else if (responseDoc["new_wifi"].is<JsonObject>()) {
                     String newSSID = responseDoc["new_wifi"]["ssid"];
                     String newPassword = responseDoc["new_wifi"]["password"];
 
@@ -88,6 +91,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
                 }
             }
             break;
+        }
 
         case WStype_BIN:
         case WStype_ERROR:
@@ -115,7 +119,7 @@ void sendDataToServer() {
     }
 
     // Create JSON payload
-    StaticJsonDocument<256> doc;
+    JsonDocument doc;
     doc["temperature"] = temperature;
     doc["humidity"] = humidity;
     doc["motion"] = motionDetected;
@@ -136,7 +140,7 @@ void sendDataToServer() {
 void updateDeviceStatus() {
     if (!isWiFiConnected || !isWsConnected) return;
 
-    StaticJsonDocument<256> doc;
+    JsonDocument doc;
     doc["device_status"]["fan"] = fanSpeed;
     doc["device_status"]["light1"] = light1Status;
     doc["device_status"]["light2"] = light2Status;
