@@ -103,29 +103,28 @@ void loop() {
 
     // Check WiFi connection
     if (WiFi.status() != WL_CONNECTED && isWiFiConnected) {
-        isWiFiConnected = false;
-        isWsConnected = false;
-        isApiConnected = false;
-        currentLcdState = CONNECTING_WIFI;
-        updateLCD();
-
-        // Try to reconnect before going back to AP mode
-        WiFi.reconnect();
-        int attempts = 0;
-        while (WiFi.status() != WL_CONNECTED && attempts < 10) {
-            displayLoadingAnimation();
-            delay(500);
-            attempts++;
-        }
-
-        if (WiFi.status() != WL_CONNECTED) {
-            setupCaptivePortal();  // Restart captive portal if reconnection fails
-        } else {
-            isWiFiConnected = true;
-            currentLcdState = NORMAL_OPERATION;
-            setupWebSocket();  // Reconnect WebSocket
-        }
-    }
+      isWiFiConnected = false;
+      isWsConnected = false;
+      isApiConnected = false;
+      currentLcdState = CONNECTING_WIFI;
+      updateLCD();
+      static unsigned long lastReconnectAttempt = 0;
+      static int reconnectAttempts = 0;
+      if (reconnectAttempts < 10 && millis() - lastReconnectAttempt >= 500) {
+          displayLoadingAnimation();
+          WiFi.reconnect();
+          reconnectAttempts++;
+          lastReconnectAttempt = millis();
+      } else if (reconnectAttempts >= 10) {
+          setupCaptivePortal();
+          reconnectAttempts = 0;
+      } else if (WiFi.status() == WL_CONNECTED) {
+          isWiFiConnected = true;
+          currentLcdState = NORMAL_OPERATION;
+          reconnectAttempts = 0;
+          setupWebSocket();
+      }
+  }
 
     // Small delay to prevent CPU hogging
     delay(10);
