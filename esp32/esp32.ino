@@ -8,6 +8,7 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <WebSocketsServer.h>
+#include <WebSocketsClient.h>  // Added for external API WebSocket client
 
 // ===== PIN DEFINITIONS =====
 #define LED1_PIN 13      // LED 1 - PWM controlled
@@ -32,6 +33,7 @@ const char* API_ENDPOINT = "wss://websocket-server-ts-production.up.railway.app/
 
 // ===== GLOBAL VARIABLES =====
 WebSocketsServer webSocket(81);
+WebSocketsClient apiClient; // External API WebSocket client
 float temperature = 0;
 float humidity = 0;
 bool motionDetected = false;
@@ -44,7 +46,9 @@ unsigned long lastMotionTime = 0;
 unsigned long lastDataSend = 0;
 unsigned long lastLCDUpdate = 0;
 unsigned long lastAnimationUpdate = 0;
+unsigned long lastPingTime = 0;  // For keeping the API connection alive
 uint8_t animationFrame = 0;
+const unsigned long PING_INTERVAL = 30000;  // Send ping every 30 seconds
 
 // ===== CUSTOM CHARACTERS =====
 // WiFi connected icon
@@ -139,7 +143,7 @@ void broadcastDeviceStatus() {
   Serial.print("%, Motion: ");
   Serial.println(motionDetected ? "Yes" : "No");
 
-  StaticJsonDocument<256> doc;
+  JsonDocument doc; // Use modern JsonDocument without size
   doc["led1"] = led1Intensity;
   doc["led2"] = led2State;
   doc["led3"] = led3State;
@@ -439,6 +443,9 @@ void setupLCD();
 void updateLCD();
 void displayLoadingAnimation();
 void controlLED(uint8_t pin, bool state);
+void setupApiWebSocket();
+void apiWebSocketEvent(WStype_t type, uint8_t * payload, size_t length);
+void onWebSocketEvent(uint8_t client_num, WStype_t type, uint8_t * payload, size_t length);
 
 // ===== SETUP FUNCTION =====
 void setup() {
@@ -471,6 +478,10 @@ void setup() {
 
   // Initialize WiFi connection or Captive Portal
   setupWiFi();
+
+  // Start local WebSocket server
+  webSocket.begin();
+  webSocket.onEvent(onWebSocketEvent);
 
   Serial.println("System initialization complete");
 }
@@ -508,6 +519,21 @@ void loop() {
   if (isWiFiConnected && millis() - lastDataSend >= DATA_SEND_INTERVAL) {
     sendDataToServer();
     lastDataSend = millis();
+  }
+
+  // Handle WebSocket connections
+  if (isWiFiConnected) {
+    // Handle local WebSocket server
+    webSocket.loop();
+    
+    // Handle API WebSocket client
+    apiClient.loop();
+    
+    // Send ping to keep API connection alive
+    if (isApiConnected && millis() - lastPingTime >= PING_INTERVAL) {
+      apiClient.sendTXT("ping");
+      lastPingTime = millis();
+    }
   }
 
   // Reconnect if WiFi connection is lost
@@ -574,9 +600,87 @@ void setupWiFi() {
 
     Serial.print("Connected to WiFi. IP: ");
     Serial.println(WiFi.localIP());
+    
+    // Setup connection to API WebSocket server
+    setupApiWebSocket();
   } else {
     // If connection failed, setup captive portal
     setupCaptivePortal();
+  }
+}
+
+// ===== API WEBSOCKET SETUP =====
+void setupApiWebSocket() {
+  if (!isWiFiConnected) return;
+
+  // Parse the URL to extract host, port, and path
+  String url = API_ENDPOINT;
+  String host, path;
+  uint16_t port;
+  
+  // Remove protocol prefix
+  if (url.startsWith("wss://")) {
+    url = url.substring(6); // Remove "wss://"
+    port = 443; // Default WSS port
+  } else if (url.startsWith("ws://")) {
+    url = url.substring(5); // Remove "ws://"
+    port = 80; // Default WS port
+  } else {
+    Serial.println("Invalid WebSocket URL format");
+    return;
+  }
+  
+  // Extract host and path
+  int pathIndex = url.indexOf('/');
+  if (pathIndex > 0) {
+    host = url.substring(0, pathIndex);
+    path = url.substring(pathIndex);
+  } else {
+    host = url;
+    path = "/";
+  }
+  
+  Serial.print("Connecting to WebSocket API: ");
+  Serial.print(host);
+  Serial.print(":");
+  Serial.print(port);
+  Serial.println(path);
+  
+  // Initialize WebSocket client
+  apiClient.beginSSL(host.c_str(), port, path.c_str());
+  apiClient.onEvent(apiWebSocketEvent);
+  apiClient.setReconnectInterval(5000); // Try to reconnect every 5 seconds if connection fails
+  
+  Serial.println("WebSocket API client initialized");
+}
+
+// ===== API WEBSOCKET EVENT HANDLER =====
+void apiWebSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
+  switch (type) {
+    case WStype_DISCONNECTED:
+      Serial.println("Disconnected from API WebSocket server");
+      isApiConnected = false;
+      break;
+      
+    case WStype_CONNECTED:
+      Serial.println("Connected to API WebSocket server");
+      isApiConnected = true;
+      // Send initial data upon connection
+      sendDataToServer();
+      break;
+      
+    case WStype_TEXT:
+      Serial.print("Received data from API server: ");
+      Serial.println((char*)payload);
+      // Here you would process any incoming commands from the server
+      break;
+      
+    case WStype_ERROR:
+      Serial.println("WebSocket API Error!");
+      break;
+      
+    default:
+      break;
   }
 }
 
@@ -806,6 +910,9 @@ bool tryConnectWifi(String ssid, String password) {
     // Stop DNS server and AP mode
     dnsServer.stop();
     WiFi.mode(WIFI_STA);
+    
+    // Connect to API WebSocket server
+    setupApiWebSocket();
 
     // Save credentials to SPIFFS (would be implemented here)
     return true;
@@ -838,10 +945,8 @@ void readSensors() {
 
 // ===== DATA SENDING FUNCTION =====
 void sendDataToServer() {
-  if (!isWiFiConnected) return;
+  if (!isWiFiConnected || !isApiConnected) return;
 
-  // This would be implemented with HTTPClient for actual API communication
-  // For now, just simulate a successful API call
   Serial.println("Sending data to server:");
   Serial.print("Temperature: ");
   Serial.print(temperature);
@@ -850,7 +955,24 @@ void sendDataToServer() {
   Serial.print("%, Motion: ");
   Serial.println(motionDetected ? "Yes" : "No");
 
-  isApiConnected = true; // Simulate successful API connection
+  // Create JSON document with sensor data and device status
+  JsonDocument doc; // Use modern JsonDocument without size
+  doc["led1"] = led1Intensity;
+  doc["led2"] = led2State;
+  doc["led3"] = led3State;
+  doc["motion"] = motionDetected;
+  doc["temp"] = temperature;
+  doc["hum"] = humidity;
+  doc["deviceId"] = "esp32-smart-hub";  // Add a unique device identifier
+
+  // Serialize JSON to string
+  String jsonPayload;
+  serializeJson(doc, jsonPayload);
+  
+  // Send data to API server
+  apiClient.sendTXT(jsonPayload);
+  
+  isApiConnected = true; // Optimistic update - the WebSocket event handler will set this to false if there's a disconnection
 }
 
 // ===== LCD UPDATE FUNCTION =====
