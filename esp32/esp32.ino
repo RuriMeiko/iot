@@ -460,6 +460,8 @@ void setup() {
   pinMode(LED4_PIN, OUTPUT);
   pinMode(PIR_PIN, INPUT);
 
+  digitalWrite(LED2_PIN, LOW);
+  digitalWrite(LED3_PIN, LOW);
   // Initialize PWM for LED1
   ledcAttachPin(LED1_PIN, 0); // Channel 0
   ledcSetup(0, 5000, 8);      // 5kHz, 8-bit
