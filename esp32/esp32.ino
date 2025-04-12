@@ -12,7 +12,7 @@
 
 // ===== PIN DEFINITIONS =====
 #define LED1_PIN 13      // LED 1 - PWM controlled
-#define LED2_PIN 12      // LED 2 - On/Off
+#define LED2_PIN 17      // LED 2 - On/Off
 #define LED3_PIN 14      // LED 3 - On/Off
 #define LED4_PIN 27      // LED 4 - Motion indicator
 #define DHT_PIN 26       // DHT11 temperature/humidity sensor
