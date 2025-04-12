@@ -525,10 +525,10 @@ void loop() {
   if (isWiFiConnected) {
     // Handle local WebSocket server
     webSocket.loop();
-    
+
     // Handle API WebSocket client
     apiClient.loop();
-    
+
     // Send ping to keep API connection alive
     if (isApiConnected && millis() - lastPingTime >= PING_INTERVAL) {
       apiClient.sendTXT("ping");
@@ -600,7 +600,7 @@ void setupWiFi() {
 
     Serial.print("Connected to WiFi. IP: ");
     Serial.println(WiFi.localIP());
-    
+
     // Setup connection to API WebSocket server
     setupApiWebSocket();
   } else {
@@ -617,7 +617,7 @@ void setupApiWebSocket() {
   String url = API_ENDPOINT;
   String host, path;
   uint16_t port;
-  
+
   // Remove protocol prefix
   if (url.startsWith("wss://")) {
     url = url.substring(6); // Remove "wss://"
@@ -629,7 +629,7 @@ void setupApiWebSocket() {
     Serial.println("Invalid WebSocket URL format");
     return;
   }
-  
+
   // Extract host and path
   int pathIndex = url.indexOf('/');
   if (pathIndex > 0) {
@@ -639,18 +639,18 @@ void setupApiWebSocket() {
     host = url;
     path = "/";
   }
-  
+
   Serial.print("Connecting to WebSocket API: ");
   Serial.print(host);
   Serial.print(":");
   Serial.print(port);
   Serial.println(path);
-  
+
   // Initialize WebSocket client
   apiClient.beginSSL(host.c_str(), port, path.c_str());
   apiClient.onEvent(apiWebSocketEvent);
   apiClient.setReconnectInterval(5000); // Try to reconnect every 5 seconds if connection fails
-  
+
   Serial.println("WebSocket API client initialized");
 }
 
@@ -661,24 +661,24 @@ void apiWebSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       Serial.println("Disconnected from API WebSocket server");
       isApiConnected = false;
       break;
-      
+
     case WStype_CONNECTED:
       Serial.println("Connected to API WebSocket server");
       isApiConnected = true;
       // Send initial data upon connection
       sendDataToServer();
       break;
-      
+
     case WStype_TEXT:
       Serial.print("Received data from API server: ");
       Serial.println((char*)payload);
       // Here you would process any incoming commands from the server
       break;
-      
+
     case WStype_ERROR:
       Serial.println("WebSocket API Error!");
       break;
-      
+
     default:
       break;
   }
@@ -717,7 +717,14 @@ void onWebSocketEvent(uint8_t client_num, WStype_t type, uint8_t *payload, size_
 
       // Gửi danh sách mạng ngay khi client kết nối
       String json = scanWifiJson();
-      webSocket.sendTXT(client_num, json);
+      JsonDocument doc;
+      doc["action"] = "getwifi";
+      JsonObject payload = doc.createNestedObject("payload");
+      payload["networks"] = json;
+
+      String jsonString;
+      serializeJson(doc, jsonString);
+      webSocket.sendTXT(client_num, jsonString);
       break;
     }
 
@@ -727,14 +734,28 @@ void onWebSocketEvent(uint8_t client_num, WStype_t type, uint8_t *payload, size_
 
       if (msg == "scan") {
         String json = scanWifiJson();
-        webSocket.sendTXT(client_num, json);
+        JsonDocument doc;
+        doc["action"] = "getwifi";
+        JsonObject payload = doc.createNestedObject("payload");
+        payload["networks"] = json;
+
+        String jsonString;
+        serializeJson(doc, jsonString);
+        webSocket.sendTXT(client_num, jsonString);
 
       } else if (msg.startsWith("connect:")) {
         int sep = msg.indexOf("|");
         String ssid = msg.substring(8, sep);
         String pass = msg.substring(sep + 1);
         bool success = tryConnectWifi(ssid, pass);
-        webSocket.sendTXT(client_num, success ? "connected" : "failed");
+
+        JsonDocument doc;
+        doc["action"] = "connectstatus";
+        doc["payload"] = success ? "connected" : "failed";
+
+        String jsonString;
+        serializeJson(doc, jsonString);
+        webSocket.sendTXT(client_num, jsonString);
 
       } else if (msg.startsWith("led1:")) {
         int val = msg.substring(5).toInt();
@@ -910,7 +931,7 @@ bool tryConnectWifi(String ssid, String password) {
     // Stop DNS server and AP mode
     dnsServer.stop();
     WiFi.mode(WIFI_STA);
-    
+
     // Connect to API WebSocket server
     setupApiWebSocket();
 
@@ -957,21 +978,23 @@ void sendDataToServer() {
 
   // Create JSON document with sensor data and device status
   JsonDocument doc; // Use modern JsonDocument without size
-  doc["led1"] = led1Intensity;
-  doc["led2"] = led2State;
-  doc["led3"] = led3State;
-  doc["motion"] = motionDetected;
-  doc["temp"] = temperature;
-  doc["hum"] = humidity;
-  doc["deviceId"] = "esp32-smart-hub";  // Add a unique device identifier
+  doc["action"] = "updateenv";
+  JsonObject payload = doc.createNestedObject("payload");
+  payload["led1"] = led1Intensity;
+  payload["led2"] = led2State;
+  payload["led3"] = led3State;
+  payload["motion"] = motionDetected;
+  payload["temp"] = temperature;
+  payload["hum"] = humidity;
+  payload["deviceId"] = "esp32-smart-hub";  // Add a unique device identifier
 
   // Serialize JSON to string
   String jsonPayload;
   serializeJson(doc, jsonPayload);
-  
+
   // Send data to API server
   apiClient.sendTXT(jsonPayload);
-  
+
   isApiConnected = true; // Optimistic update - the WebSocket event handler will set this to false if there's a disconnection
 }
 
